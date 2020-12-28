@@ -108,10 +108,11 @@ class Network:
         self.errors.append(self.layers[-1].error(ground_truth))
 
 
-def example_train(train_in, train_out, network: Network):
+def example_train(train_in, train_out, network: Network, delta_cutoff=-1e-6, error_cutoff=0.01):
     data = list(zip(train_in, train_out))
     possible_datapoints = list(range(len(train_in)))
-    errors = [np.inf]
+    errors = [-np.inf]
+    error_deltas = []
     lr_max = 0.55
     lr_min = 0.02
     num_epochs = 30000
@@ -127,8 +128,11 @@ def example_train(train_in, train_out, network: Network):
         error = network.return_reset_error()
         error_delta = error - errors[-1]
         errors.append(error)
+        error_deltas.append(error_delta)
         print("Error:", error, "Delta", error_delta)
         print("\n")
+        if i > 50 and error < error_cutoff and np.mean(error_deltas[-50:]) > delta_cutoff:
+            break
     plt.plot(errors)
     plt.savefig("errors.png")
 
@@ -138,8 +142,8 @@ if __name__ == "__main__":
     np.random.seed(0)
 
     net = Network()
-    net.add_layer(Layer(2, 2, Activation.SIGMOID))
-    net.add_layer(Layer(2, 2, Activation.SIGMOID))
+    net.add_layer(Layer(2, 4, Activation.RELU))
+    net.add_layer(Layer(4, 2, Activation.RELU))
     net.add_layer(Layer(2, 1, Activation.SIGMOID))
 
     # test_data = np.array([5, 3])
